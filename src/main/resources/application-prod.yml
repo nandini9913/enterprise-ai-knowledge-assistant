@@ -1,0 +1,18 @@
+# Production: AWS services, structured JSON logs, no development defaults.
+# Required environment: DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET, S3_BUCKET, SQS_QUEUE_URL.
+# AWS credentials come from the task/instance IAM role - never from configuration.
+app:
+  storage:
+    provider: s3
+  processing:
+    mode: sqs
+  ai:
+    embedding:
+      provider: bedrock
+    chat:
+      provider: bedrock
+
+logging:
+  structured:
+    format:
+      console: ecs                 # one JSON object per line, ready for CloudWatch / OpenSearch

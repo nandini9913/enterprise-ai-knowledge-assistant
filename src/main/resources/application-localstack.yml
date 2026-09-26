@@ -1,0 +1,13 @@
+# Run against LocalStack (S3 + SQS emulation), as wired in docker-compose.yml.
+# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY are read by the SDK's default credential chain.
+app:
+  aws:
+    endpoint: ${AWS_ENDPOINT_URL:http://localhost:4566}
+  storage:
+    provider: s3
+    s3-bucket: ${S3_BUCKET:knowledge-assistant-documents}
+  processing:
+    mode: sqs
+    sqs:
+      queue-url: ${SQS_QUEUE_URL:http://sqs.us-east-1.localhost.localstack.cloud:4566/000000000000/document-processing}
+      retry-backoff: PT5S
