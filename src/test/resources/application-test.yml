@@ -1,0 +1,25 @@
+# Tests: PostgreSQL comes from Testcontainers (@ServiceConnection); AI and storage are local.
+app:
+  security:
+    jwt:
+      secret: test-secret-test-secret-test-secret-0123456789
+    bootstrap-admin:
+      username: test-admin
+      password: test-admin-password
+  storage:
+    provider: local
+    local-path: ${java.io.tmpdir}/knowledge-assistant-test-documents
+  processing:
+    mode: inline
+    inline-async: false            # process synchronously so tests can assert on READY
+  ai:
+    embedding:
+      provider: local
+    chat:
+      provider: local
+  rag:
+    min-similarity: 0.05
+
+logging:
+  level:
+    com.nandini.knowledgeassistant: INFO

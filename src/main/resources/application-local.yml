@@ -1,0 +1,15 @@
+# Local development: PostgreSQL from docker compose, everything else in-process.
+# Start with:  docker compose up -d postgres
+#              ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+app:
+  security:
+    jwt:
+      # Development-only secret. Production must supply JWT_SECRET.
+      secret: ${JWT_SECRET:local-development-secret-change-me-please-0123456789}
+    bootstrap-admin:
+      username: ${BOOTSTRAP_ADMIN_USERNAME:admin}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:admin-password-change-me}
+
+logging:
+  level:
+    com.nandini.knowledgeassistant: DEBUG

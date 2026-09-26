@@ -1,10 +1,118 @@
+# Base configuration shared by every environment.
+# Environment-specific values come from profiles (local, test, prod) and environment variables.
 spring:
   application:
     name: enterprise-ai-knowledge-assistant
+  threads:
+    virtual:
+      enabled: false
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/knowledge_assistant}
+    username: ${DB_USERNAME:knowledge}
+    password: ${DB_PASSWORD:knowledge}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+  jpa:
+    open-in-view: false            # no lazy loading from controllers; transactions end in services
+    hibernate:
+      ddl-auto: validate           # Flyway owns the schema; Hibernate only verifies it
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 21MB
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
 server:
-  port: 8080
+  port: ${PORT:8080}
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true              # /actuator/health/liveness and /readiness for orchestrators
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  pattern:
+    level: "%5p [%X{requestId:-}]"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:}
+      issuer: enterprise-ai-knowledge-assistant
+      ttl: ${JWT_TTL:PT1H}
+    bootstrap-admin:
+      username: ${BOOTSTRAP_ADMIN_USERNAME:}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  aws:
+    region: ${AWS_REGION:us-east-1}
+    endpoint: ${AWS_ENDPOINT_URL:}
+  storage:
+    provider: ${STORAGE_PROVIDER:local}
+    local-path: ${STORAGE_LOCAL_PATH:./data/documents}
+    s3-bucket: ${S3_BUCKET:}
+  processing:
+    mode: ${PROCESSING_MODE:inline}
+    inline-async: true
+    lease-timeout: PT15M
+    sqs:
+      queue-url: ${SQS_QUEUE_URL:}
+      listener-enabled: ${SQS_LISTENER_ENABLED:true}
+      wait-time-seconds: 20        # long polling: fewer empty receives, lower cost
+      max-messages: 5
+      max-receive-count: 5         # must match the queue's redrive policy
+      retry-backoff: PT30S
+  documents:
+    max-file-size: 20MB
+    max-pages: 500
+  chunking:
+    target-size: 1200
+    overlap: 200
+    min-chunk-size: 80
+  ai:
+    embedding:
+      provider: ${EMBEDDING_PROVIDER:local}
+      dimensions: 1024
+      bedrock-model-id: ${BEDROCK_EMBEDDING_MODEL_ID:amazon.titan-embed-text-v2:0}
+      batch-size: 16
+    chat:
+      provider: ${CHAT_PROVIDER:local}
+      # Bedrock model or inference-profile id; check the Bedrock console for the ids enabled in your region.
+      bedrock-model-id: ${BEDROCK_CHAT_MODEL_ID:anthropic.claude-opus-5}
+      max-tokens: 1024
+      timeout: PT60S
+      max-attempts: 3
+  rag:
+    top-k: 5
+    max-top-k: 10
+    min-similarity: 0.20
+    max-context-chars: 12000
+    max-question-length: 1000
+    max-answer-chars: 4000
+    redact-pii: true
+    require-citations: true
